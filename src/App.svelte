@@ -27,7 +27,7 @@
       .toFloat()
       .expandDims();
     const predictions = (await model.predict(tensor)).data();
-    console.log(predictions);
+    console.log({ predictions });
   }
 
   let elVideo;
