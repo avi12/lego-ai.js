@@ -1,56 +1,81 @@
 <script lang="ts">
-  import type { GraphModel, io } from "@tensorflow/tfjs";
-  import * as tf from "@tensorflow/tfjs";
-  import { browser } from "@tensorflow/tfjs";
   import { onMount } from "svelte";
+  import "@tensorflow/tfjs-backend-cpu";
+  import * as tf from "@tensorflow/tfjs-core";
+  import * as tflite from "@tensorflow/tfjs-tflite";
+  import type { TFLiteModel } from "@tensorflow/tfjs-tflite";
 
-  async function init(): Promise<void> {
-    model = await tf.loadGraphModel("./web_model/model.json");
+  let elVideo: HTMLVideoElement;
+  let elCanvas: HTMLCanvasElement;
+  let context: CanvasRenderingContext2D;
+  let model: TFLiteModel;
+  let stream: MediaStream;
+  let elImage: HTMLImageElement;
 
-    elVideo.srcObject = await navigator.mediaDevices.getUserMedia({
+  async function initWebCam(): Promise<void> {
+    stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: "environment",
+        facingMode: "environment"
       }
     });
+    elVideo.srcObject = stream;
+  }
+
+  async function init(): Promise<void> {
+    model = await tflite.loadTFLiteModel("model.tflite");
+
+    // await initWebCam();
+  }
+
+  async function initCanvas(): Promise<void> {
+    elCanvas.width = elImage.width;
+    elCanvas.height = elImage.height;
+    context.drawImage(elImage, 0, 0, elCanvas.width, elCanvas.height);
   }
 
   onMount(async () => {
     await init();
-    context = elVideo.getContext("2d");
+    context = elCanvas.getContext("2d");
+    await initCanvas();
   });
 
   async function predict(): Promise<void> {
-    context.drawImage(elVideo, 0, 0, 500, 500);
-
-    const tensor = browser.fromPixels(elCanvas)
-      .resizeBilinear([500, 500])
-      .toFloat()
-      .expandDims();
-    const predictions = (await model.predict(tensor)).data();
-    console.log({ predictions });
+    // context.drawImage(elVideo, 0, 0, elVideo.videoWidth, elVideo.videoHeight);
+    const img = tf.browser.fromPixels(elImage);
+    img.print(true);
+    const input = tf.sub(tf.div(tf.expandDims(img), 127.5), 1);
+    const output = model.predict(input) as tf.Tensor;
+    console.log(output.dataSync());
   }
 
-  let elVideo;
-  let elCanvas: HTMLCanvasElement;
-  let context: CanvasRenderingContext2D;
-  let model: GraphModel<string | io.IOHandler>;
 </script>
 
 <main>
-  <video bind:this={elVideo} muted autoplay on:click={predict}></video>
-  <canvas bind:this={elCanvas}></canvas>
+  <div>
+    <!--    <video autoplay bind:this={elVideo} muted on:click={predict}></video>-->
+  </div>
+  <div><img alt="" bind:this={elImage} src="sample1.jpg" /></div>
+  <div>
+    <canvas bind:this={elCanvas} on:click={predict}></canvas>
+  </div>
 </main>
 
 <style>
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
 
-  main {
-    text-align: center;
-    padding: 1em;
-    margin: 0 auto;
+  video {
+    max-width: 100%;
+    max-height: 100%;
   }
 
+  img {
+    display: none;
+  }
+
+  :global(body) {
+    margin: 0;
+    padding: 0;
+  }
 </style>
