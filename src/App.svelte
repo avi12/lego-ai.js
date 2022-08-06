@@ -1,9 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import "@tensorflow/tfjs-backend-cpu";
-  import * as tf from "@tensorflow/tfjs-core";
-  import * as tflite from "@tensorflow/tfjs-tflite";
   import type { TFLiteModel } from "@tensorflow/tfjs-tflite";
+  import type { Tensor } from "@tensorflow/tfjs";
 
   let elVideo: HTMLVideoElement;
   let elCanvas: HTMLCanvasElement;
@@ -41,20 +39,27 @@
 
   async function predict(): Promise<void> {
     // context.drawImage(elVideo, 0, 0, elVideo.videoWidth, elVideo.videoHeight);
-    const img = tf.browser.fromPixels(elImage);
-    img.print(true);
-    const input = tf.sub(tf.div(tf.expandDims(img), 127.5), 1);
-    const output = model.predict(input) as tf.Tensor;
-    console.log(output.dataSync());
-  }
+    const inputTensor = tf.image
+      // Resize.
+      .resizeBilinear(tf.browser.fromPixels(elImage), [640, 640])
+      // Normalize.
+      .expandDims()
+      .div(127.5)
+      .sub(1);
+    const output = model.predict(inputTensor) as Tensor;
+    console.log(output);
 
+    // De-normalize
+    // const data = output.add(1).mul(127.5);
+    // console.log(Array.from(data.dataSync()));
+  }
 </script>
 
 <main>
   <div>
     <!--    <video autoplay bind:this={elVideo} muted on:click={predict}></video>-->
   </div>
-  <div><img alt="" bind:this={elImage} src="sample1.jpg" /></div>
+  <div><img alt="" bind:this={elImage} src="sample1.jpg"/></div>
   <div>
     <canvas bind:this={elCanvas} on:click={predict}></canvas>
   </div>
