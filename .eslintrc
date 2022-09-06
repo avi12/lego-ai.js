@@ -43,6 +43,7 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "object-curly-spacing": ["warn", "always"],
     "arrow-parens": ["warn", "as-needed"],
-    "quotes": ["warn", "double"]
+    "quotes": ["warn", "double"],
+    "comma-dangle": ["warn", "never"]
   }
 }
