@@ -43,9 +43,13 @@
   });
 
   async function predict(): Promise<void> {
-    const tensor = tf.browser.fromPixels(elImage).expandDims()//.resizeBilinear([512, 512]).toInt();
-    const predictions = await model.executeAsync(tensor);
-    for (const prediction of predictions) {
+    const inputSize = model.inputs[0].shape[1];
+    const tensorImage = tf.browser.fromPixels(elImage, 3)
+    const tensor = tf.image.resizeBilinear(tensorImage.expandDims().toFloat(), [inputSize, inputSize]).reverse(-1);
+    const outputs = await model.executeAsync(tensor);
+    const arrays = !Array.isArray(outputs) ?  outputs.array() :  Promise.all(outputs.map(tensor => tensor.array()));
+    const predictions = await arrays;
+    for (const prediction of outputs) {
       prediction.print();
     }
   }
