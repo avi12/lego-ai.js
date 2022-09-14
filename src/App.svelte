@@ -43,10 +43,9 @@
   });
 
   async function predict(): Promise<void> {
-    // const inputSize = model.inputs[0].shape[1];
-    const inputSize = Object.values(model.modelSignature["inputs"])[0].tensorShape.dim[2].size;
     const buffer = tf.browser.fromPixels(elImage);
-    const resize = tf.image.resizeBilinear(buffer, [inputSize, inputSize]);
+    const [width, height] = buffer.shape;
+    const resize = tf.image.resizeBilinear(buffer, [width, height]);
     const cast = resize.cast("float32");
     const expand = cast.expandDims(0);
     const tensor = expand;
@@ -56,7 +55,6 @@
       outputShape: tensor.shape,
       size: buffer.size,
     };
-    console.log({ tensorImage });
     const outputs = await model.executeAsync(tensorImage.tensor);
     // const arrays = !Array.isArray(outputs) ? outputs.array() : Promise.all(outputs.map(tensor => tensor.array()));
     // const predictions = await arrays;
