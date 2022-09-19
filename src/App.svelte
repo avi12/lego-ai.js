@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { GraphModel, Rank, Tensor } from "@tensorflow/tfjs";
+  import type {GraphModel} from "@tensorflow/tfjs";
   import * as tf from "@tensorflow/tfjs";
-  import { onMount } from "svelte";
+  import {onMount} from "svelte";
   import srcImage from "./assets/sample.jpg";
 
   let elVideo: HTMLVideoElement;
@@ -43,10 +43,10 @@
   });
 
   async function predict(): Promise<void> {
-    const buffer = tf.browser.fromPixels(elImage);
+    const buffer = tf.browser.fromPixels(elImage).div(255);
     const [width, height] = buffer.shape;
     const resize = tf.image.resizeBilinear(buffer, [width, height]);
-    const cast = resize.cast("float32");
+    const cast = resize.cast("int32");
     const expand = cast.expandDims(0);
     const tensor = expand;
     const tensorImage = {
@@ -204,16 +204,16 @@
   <div>
     <!--    <video autoplay bind:this={elVideo} muted on:click={predict}></video>-->
   </div>
-  <div><img alt="" bind:this={elImage} src={srcImage} /></div>
+  <div><img alt="" bind:this={elImage} src={srcImage}/></div>
   <div>
-    <canvas bind:this={elCanvas} on:click={predict} />
+    <canvas bind:this={elCanvas} on:click={predict}/>
   </div>
 </main>
 
 <style>
   :root {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
-      "Helvetica Neue", sans-serif;
+    "Helvetica Neue", sans-serif;
   }
 
   img {
